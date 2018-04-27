@@ -195,3 +195,26 @@
 
 ;; align equals
 (global-set-key (kbd "C-c C-=") 'align-regexp)
+
+
+;; set up ggtags
+(add-hook 'c-mode-common-hook
+          (lambda ()
+            (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+              (ggtags-mode 1))))
+(defun gtags-update-single(filename)  
+  "Update Gtags database for changes in a single file"
+  (interactive)
+  (start-process "update-gtags" "update-gtags" "bash" "-c" (concat "cd " (gtags-root-dir) " ; gtags --single-update " filename )))
+(defun gtags-update-current-file()
+  (interactive)
+  (defvar filename)
+  (setq filename (replace-regexp-in-string (gtags-root-dir) "." (buffer-file-name (current-buffer))))
+  (gtags-update-single filename)
+  (message "Gtags updated for %s" filename))
+(defun gtags-update-hook()
+  "Update GTAGS file incrementally upon saving a file"
+  (when gtags-mode
+    (when (gtags-root-dir)
+      (gtags-update-current-file))))
+(add-hook 'after-save-hook 'gtags-update-hook)
